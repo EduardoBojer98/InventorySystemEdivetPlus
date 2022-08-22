@@ -3,12 +3,25 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 import tkinter as tk
+import operations
 
 # gui
 root = Tk()
 root.title("Inventory System EdivetPlus")
 root.geometry("1130x750")
 my_tree = ttk.Treeview(root)
+
+def refreshTable():
+    for data in my_tree.get_children():
+        my_tree.delete(data)
+
+    for array in operations.read():
+        my_tree.insert(parent='', index='end', iid=array, text="", values=(array), tag='orow')
+
+    my_tree.tag_configure('orow', background="#EEEEEE", font=('Arial', 12))
+    my_tree.grid(row=8, column=0, columnspan=5, rowspan=11, padx=10, pady=20)
+
+
 
 label = Label(root, text="Inventory System EdivetPlus", font=('Arial Bold', 25))
 label.grid(row=0, column=0, columnspan=8, rowspan=2, padx=50, pady=40)
@@ -66,5 +79,7 @@ my_tree.heading("Name", text="Item Name", anchor=W)
 my_tree.heading("Price", text="Item Price", anchor=W)
 my_tree.heading("Quantity", text="Item Quantity", anchor=W)
 my_tree.heading("Manufacturer", text="Item Manufacturer", anchor=W)
+
+refreshTable()
 
 root.mainloop()
