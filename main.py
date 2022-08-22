@@ -7,7 +7,7 @@ import tkinter as tk
 # gui
 root = Tk()
 root.title("Inventory System EdivetPlus")
-root.geometry("1080x720")
+root.geometry("1130x750")
 my_tree = ttk.Treeview(root)
 
 label = Label(root, text="Inventory System EdivetPlus", font=('Arial Bold', 25))
