@@ -84,28 +84,6 @@ class signup:
         sing_up = Button(frame,command=self.gotoLogin, width=6, text="Sing up", border=0, bg='white', cursor='hand2', fg='#57a1f8')
         sing_up.place(x=215, y=305)
 
-    def adduser(self):
-        con = sqlite3.connect(database=r'ims.db')
-        cur = con.cursor()
-        try:
-            if self.userID.get() == "":
-                messagebox.showerror("Error", "User ID is required", parent=self.root)
-            else:
-                cur.execute("Select * from users where userID=?", (self.userID.get(),))
-                row = cur.fetchone()
-                if row != None:
-                    messagebox.showerror("Error", "This user ID already assigned, try different", parent=self.root)
-                else:
-                    cur.execute("Insert into users (userID,Name,password) values(?,?,?)", (
-                        self.userID.get(),
-                        self.username.get(),
-                        self.password.get()
-                    ))
-                    con.commit()
-                    messagebox.showinfo('Success', "User added successfully", parent=self.root)
-        except Exception as ex:
-            messagebox.showerror("Error", f"Error due to : {str(ex)}", parent=self.root)
-
     def gotoLogin(self):
         self.root.destroy()
         os.system("python login.py")
