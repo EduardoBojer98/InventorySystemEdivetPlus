@@ -3,10 +3,15 @@ from tkinter import messagebox
 import os
 import sqlite3
 
+from businesslogic import UserService
+from models import UserModel
+
 class signup:
     def __init__(self, root):
+        self.user_service = UserService()
+
         self.root = root
-        self.root.title('Inventory System EdivetPlus Login')
+        self.root.title('EdivetPlus Novi Nalog')
         self.root.geometry('925x500+300+200')
         self.root.configure(bg="#fff")
         self.root.resizable(False, False)
@@ -17,29 +22,13 @@ class signup:
         frame = Frame(root, width=350, height=350, bg='white')
         frame.place(x=480, y=70)
 
-        heading = Label(frame, text="Sign up", fg='#57a1f8', bg='white', font=('Microsoft YaHei UI Light', 23, 'bold'))
+        heading = Label(frame, text="Napravi", fg='#57a1f8', bg='white', font=('Microsoft YaHei UI Light', 23, 'bold'))
         heading.place(x=100, y=5)
 
         self.username = StringVar()
         self.password = StringVar()
-        self.userID = StringVar()
 
-        #######################------------------username----------------
-        def on_enter(e):
-            iduser.delete(0, 'end')
-
-        def on_leave(e):
-            name = iduser.get()
-            if name == '':
-                iduser.insert(0, 'ID')
-
-        iduser = Entry(frame,textvariable=self.userID, width=25, fg='black', border=0, bg='white', font=('Microsoft YaHei UI Light', 11))
-        iduser.place(x=30, y=80)
-        iduser.insert(0, 'ID')
-        iduser.bind('<FocusIn>', on_enter)
-        iduser.bind('<FocusOut>', on_leave)
-
-        Frame(frame, width=295, height=2, bg='black', ).place(x=25, y=107)
+        #Frame(frame, width=295, height=2, bg='black', ).place(x=25, y=107)
 
         ######################--------------------password------------------
         def on_enterP(e):
@@ -76,13 +65,20 @@ class signup:
         Frame(frame, width=295, height=2, bg='black').place(x=25, y=247)
         ######################--------------------------------------------------------
 
-        Button(frame,command=self.adduser, width=39, pady=7, text='Sing In', bg='#57a1f8', fg='white', border=0).place(x=35, y=260)
+        Button(frame,command=self.add_user, width=39, pady=7, text='Sing In', bg='#57a1f8', fg='white', border=0).place(x=35, y=260)
 
-        label = Label(frame, text="dont have an account?", fg='black', bg='white', font=('Microsoft YaHei UI Light', 9))
+        label = Label(frame, text="Imas nalog idi ovde?", fg='black', bg='white', font=('Microsoft YaHei UI Light', 9))
         label.place(x=75, y=305)
 
-        sing_up = Button(frame,command=self.gotoLogin, width=6, text="Sing up", border=0, bg='white', cursor='hand2', fg='#57a1f8')
+        sing_up = Button(frame,command=self.gotoLogin, width=6, text="Ulogujse", border=0, bg='white', cursor='hand2', fg='#57a1f8')
         sing_up.place(x=215, y=305)
+
+    def add_user(self):
+        try:
+            self.user_service.add_user(self.username.get(), self.password.get())
+            messagebox.showinfo('Uspesno', "Korisnik dodat uspesno", parent=self.root)
+        except Exception as e:
+            messagebox.showerror("Greska", str(e), parent=self.root)
 
     def gotoLogin(self):
         self.root.destroy()

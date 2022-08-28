@@ -1,10 +1,12 @@
+import dataclasses
 import os
 import sqlite3
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 import tkinter as tk
-from functions import op
+
+from businesslogic import ItemService
 
 
 # from operations import CRUDOP
@@ -12,6 +14,8 @@ from functions import op
 
 class MainFrame:
     def __init__(self, root):
+        self.item_service = ItemService()
+
         self.root = root
         self.root.geometry("1350x700+10+10")
         self.root.title("Sistem za proizvode EdivetPlus | SI 6/17")
@@ -52,24 +56,20 @@ class MainFrame:
         btn_search.place(x=450, y=0, width=120, height=30)
 
         # ============================imena fildova za imput
-        idlabel = Label(self.root, text="Sifra", font=('Arial', 15))
         namelabel = Label(self.root, text="Ime", font=('Arial', 15))
         pricelabel = Label(self.root, text="Cena", font=('Arial', 15))
         quantitylabel = Label(self.root, text="Kolicina", font=('Arial', 15))
         manufacturerlabel = Label(self.root, text="Proizvodjac", font=('Arial', 15))
-        idlabel.place(x=50, y=100, height=50, width=150)
         namelabel.place(x=50, y=150, height=50, width=150)
         pricelabel.place(x=50, y=200, height=50, width=150)
         quantitylabel.place(x=50, y=250, height=50, width=150)
         manufacturerlabel.place(x=50, y=300, height=50, width=150)
 
         # =====================fildovi za imput podataka
-        itemEntry = Entry(self.root, textvariable=self.var_itemID, width=55, bd=5, font=('Arial', 15))
         nameEntry = Entry(self.root, textvariable=self.var_name, width=55, bd=5, font=('Arial', 15))
         priceEntry = Entry(self.root, textvariable=self.var_price, width=55, bd=5, font=('Arial', 15))
         quantityEntry = Entry(self.root, textvariable=self.var_quantity, width=55, bd=5, font=('Arial', 15))
         manufacturerEntry = Entry(self.root, textvariable=self.var_manufacturer, width=55, bd=5, font=('Arial', 15))
-        itemEntry.place(x=200, y=100, height=50, width=400)
         nameEntry.place(x=200, y=150, height=50, width=400)
         priceEntry.place(x=200, y=200, height=50, width=400)
         quantityEntry.place(x=200, y=250, height=50, width=400)
@@ -94,24 +94,24 @@ class MainFrame:
 
         scrolly = Scrollbar(item_frame, orient=VERTICAL)
 
-        self.ItemTable = ttk.Treeview(item_frame, columns=("Sifra", "Ime", "Cena", "Kolicina", "Proizvodjac"),
+        self.ItemTable = ttk.Treeview(item_frame, columns=("ID", "Name", "Price", "Quantity", "Manufacturer"),
                                       yscrollcommand=scrolly.set)
         scrolly.pack(side=RIGHT, fill=Y)
         scrolly.config(command=self.ItemTable.yview)
 
         self.ItemTable["show"] = 'headings'
 
-        self.ItemTable.heading("Sifra", text='Sifra')
-        self.ItemTable.heading("Ime", text='Ime')
-        self.ItemTable.heading("Cena", text='Cena')
-        self.ItemTable.heading("Kolicina", text='Kolicina')
-        self.ItemTable.heading("Proizvodjac", text='Proizvodjac')
+        self.ItemTable.heading("ID", text='Sifra')
+        self.ItemTable.heading("Name", text='Ime')
+        self.ItemTable.heading("Price", text='Cena')
+        self.ItemTable.heading("Quantity", text='Kolicina')
+        self.ItemTable.heading("Manufacturer", text='Proizvodjac')
 
-        self.ItemTable.column("Sifra", width=90)
-        self.ItemTable.column("Ime", width=100)
-        self.ItemTable.column("Cena", width=100)
-        self.ItemTable.column("Kolicina", width=100)
-        self.ItemTable.column("Proizvodjac", width=100)
+        self.ItemTable.column("ID", width=90)
+        self.ItemTable.column("Name", width=100)
+        self.ItemTable.column("Price", width=100)
+        self.ItemTable.column("Quantity", width=100)
+        self.ItemTable.column("Manufacturer", width=100)
         self.ItemTable.pack(fill=BOTH, expand=1)
         self.ItemTable.bind("<ButtonRelease-1>", self.get_data)
 
@@ -119,42 +119,20 @@ class MainFrame:
 
     # =============================add method
     def add(self):
-        con = sqlite3.connect(database=r'ims.db')
-        cur = con.cursor()
         try:
-            if self.var_itemID.get() == "":
-                messagebox.showerror("Greska", "Potrebno je ubaciti Sifru!", parent=self.root)
-            else:
-                cur.execute("Select * from items where itemID=?", (self.var_itemID.get(),))
-                row = cur.fetchone()
-                if row != None:
-                    messagebox.showerror("Greska", "Izabrali ste postojecu Sifru, izaberite drugi", parent=self.root)
-                else:
-                    cur.execute("Insert into items (ItemID,Name,Price,Quantity,Manufacturer) values(?,?,?,?,?)", (
-                        self.var_itemID.get(),
-                        self.var_name.get(),
-                        self.var_price.get(),
-                        self.var_quantity.get(),
-                        self.var_manufacturer.get()
-                    ))
-                    con.commit()
-                    messagebox.showinfo('Uspesno', "Proizvod dodat uspesno", parent=self.root)
-                    self.show()
-        except Exception as ex:
-            messagebox.showerror("Greska", f"Greska od : {str(ex)}", parent=self.root)
+            self.item_service.add_item(
+                self.var_name.get(), self.var_price.get(), self.var_quantity.get(), self.var_manufacturer.get())
+            messagebox.showinfo('Uspesno', "Proizvod dodat uspesno", parent=self.root)
+            self.show()
+        except Exception as e:
+            messagebox.showerror("Greska", str(e), parent=self.root)
 
     # =========================show data method
     def show(self):
-        con = sqlite3.connect(database=r'ims.db')
-        cur = con.cursor()
-        try:
-            cur.execute("select * from items")
-            rows = cur.fetchall()
-            self.ItemTable.delete(*self.ItemTable.get_children())
-            for row in rows:
-                self.ItemTable.insert('', END, values=row)
-        except Exception as ex:
-            messagebox.showerror("Greska", f"Greska od : {str(ex)}", parent=self.root)
+        self.ItemTable.delete(*self.ItemTable.get_children())
+        items = self.item_service.get_all()
+        for item in items:
+            self.ItemTable.insert('', END, values=dataclasses.astuple(item))
 
     # ====================get data method
     def get_data(self, ev):
@@ -169,53 +147,23 @@ class MainFrame:
 
     # =========================update data method
     def update(self):
-        con = sqlite3.connect(database=r'ims.db')
-        cur = con.cursor()
         try:
-            if self.var_itemID.get() == "":
-                messagebox.showerror("Greska", "Potrebana je Sifra", parent=self.root)
-            else:
-                cur.execute("Select * from items where itemID=?", (self.var_itemID.get(),))
-                row = cur.fetchone()
-                if row == None:
-                    messagebox.showerror("Greska", "Ova sifra nije validna", parent=self.root)
-                else:
-                    cur.execute("Update items set Name=?,Price=?,Quantity=?,Manufacturer=? where ItemID=?", (
-                        self.var_name.get(),
-                        self.var_price.get(),
-                        self.var_quantity.get(),
-                        self.var_manufacturer.get(),
-                        self.var_itemID.get(),
-                    ))
-                    con.commit()
-                    messagebox.showinfo('Uspesno', "Proizvod azuriran uspesno", parent=self.root)
-                    self.show()
-        except Exception as ex:
-            messagebox.showerror("Greska", f"Greska od : {str(ex)}", parent=self.root)
+            self.item_service.update(int(self.var_itemID.get()), self.var_name.get(), self.var_price.get(), self.var_quantity.get(), self.var_manufacturer.get())
+            messagebox.showinfo('Uspesno', "Proizvod azuriran uspesno", parent=self.root)
+            self.show()
+        except Exception as e:
+            messagebox.showerror("Greska", str(e), parent=self.root)
 
     # =====================delete data method
 
     def delete(self):
-        con = sqlite3.connect(database=r'ims.db')
-        cur = con.cursor()
         try:
-            if self.var_itemID.get() == "":
-                messagebox.showerror("Greska", "Potrebana je sifra", parent=self.root)
-            else:
-                cur.execute("Select * from items where itemID=?", (self.var_itemID.get(),))
-                row = cur.fetchone()
-                if row == None:
-                    messagebox.showerror("Greska", "Ova sifra nije validna", parent=self.root)
-                else:
-                    op = messagebox.askyesno("Potvrdi", "Sigurno zelite da obrisite?", parent=self.root)
-                    if op == True:
-                        cur.execute('delete from items where itemID=?', (self.var_itemID.get(),))
-                        con.commit()
-                        messagebox.showinfo("Obrisi", "Proizvod je uspesno obrisen", parent=self.root)
-                        self.show()
-                        self.clear()
-        except Exception as ex:
-            messagebox.showerror("Greska", f"Greska od : {str(ex)}", parent=self.root)
+            self.item_service.delete(int(self.var_itemID.get()))
+            messagebox.showinfo("Obrisi", "Proizvod je uspesno obrisan", parent=self.root)
+            self.show()
+            self.clear()
+        except Exception as e:
+            messagebox.showerror("Greska", str(e), parent=self.root)
 
     def clear(self):
         self.var_itemID.set("")
@@ -223,30 +171,24 @@ class MainFrame:
         self.var_price.set("")
         self.var_quantity.set("")
         self.var_manufacturer.set("")
-        self.var_searchType.set("Select")
+        self.var_searchType.set("Izaberi")
         self.show()
 
     def search(self):
-        con = sqlite3.connect(database=r'ims.db')
-        cur = con.cursor()
-        try:
-            if self.var_searchType.get() == "Select":
-                messagebox.showerror("Greska", "Izaberi opciju za pretragu", parent=self.root)
-            elif self.var_searchtxt.get() == "":
-                messagebox.showerror("Greska", "mora da se unese text", parent=self.root)
-            else:
-                cur.execute(
-                    "select * from items where " + self.var_searchType.get() + " LIKE '%" + self.var_searchtxt.get() + "%'")
-                rows = cur.fetchall()
-                if len(rows) != 0:
-                    self.ItemTable.delete(*self.ItemTable.get_children())
-                    for row in rows:
-                        self.ItemTable.insert('', END, values=row)
-                else:
-                    messagebox.showerror("Greska", "nema podataka sa ovim zahtevima!", parent=self.root)
-        except Exception as ex:
-            messagebox.showerror("Greska", f"Greska od : {str(ex)}", parent=self.root)
+        self.ItemTable.delete(*self.ItemTable.get_children())
+        items = self.item_service.get_all()
+        for item in items:
+            print(item)
+            self.ItemTable.insert('', END, values=dataclasses.astuple(item))
 
+        if self.var_searchType.get() == "Izaberi":
+            messagebox.showerror("Greska", "Izaberite opciju za pretragu", parent=self.root)
+            return
+
+        self.ItemTable.delete(*self.ItemTable.get_children())
+        items = self.item_service.search(self.var_searchType.get(), self.var_searchtxt.get())
+        for item in items:
+            self.ItemTable.insert('', END, values=dataclasses.astuple(item))
 
     def logout(self):
         self.root.destroy()
